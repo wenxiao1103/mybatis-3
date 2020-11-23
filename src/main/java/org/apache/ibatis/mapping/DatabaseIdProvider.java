@@ -32,6 +32,6 @@ public interface DatabaseIdProvider {
   default void setProperties(Properties p) {
     // NOP
   }
-
+  //核心方法
   String getDatabaseId(DataSource dataSource) throws SQLException;
 }

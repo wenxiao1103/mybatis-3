@@ -92,10 +92,15 @@ public class Reflector {
   }
   //主要负责解析类中定义的getter方法
   private void addGetMethods(Class<?> clazz) {
+    //conflictingGetters集合的key为属性名称，value是相应getter方法集合，因为子类可能覆盖
+    //父类的getter方法，所以同一属性名称可能会存在多个getter方法
     Map<String, List<Method>> conflictingGetters = new HashMap<>();
+    //步骤1：获取指定类以及其父类和接口中定义的方法
     Method[] methods = getClassMethods(clazz);
+    //步骤2：按照JavaBean规范查找getter方法，并记录到conflictingGetters集合中
     Arrays.stream(methods).filter(m -> m.getParameterTypes().length == 0 && PropertyNamer.isGetter(m.getName()))
       .forEach(m -> addMethodConflict(conflictingGetters, PropertyNamer.methodToProperty(m.getName()), m));
+    //步骤3：对conflictingGetters集合进行处理
     resolveGetterConflicts(conflictingGetters);
   }
 
@@ -127,11 +132,13 @@ public class Reflector {
           break;
         }
       }
+      //完成了对getMethods集合和getTypes集合的填充
       addGetMethod(propName, winner, isAmbiguous);
     }
   }
 
   private void addGetMethod(String name, Method method, boolean isAmbiguous) {
+    //将属性姓名以及对应的MethodInvoker对象添加到getMethods集合中
     MethodInvoker invoker = isAmbiguous
         ? new AmbiguousMethodInvoker(method, MessageFormat.format(
             "Illegal overloaded getter method with ambiguous type for property ''{0}'' in class ''{1}''. This breaks the JavaBeans specification and can cause unpredictable results.",
@@ -230,7 +237,8 @@ public class Reflector {
     }
     return result;
   }
-
+  //处理类中定义的所有字段，并且将处理后的字段信息添加到setMethods集合，setTypes集合、
+  //getMethods集合以及getTypes集合中
   private void addFields(Class<?> clazz) {
     Field[] fields = clazz.getDeclaredFields();
     for (Field field : fields) {
@@ -314,6 +322,8 @@ public class Reflector {
         // check to see if the method is already known
         // if it is known, then an extended class must have
         // overridden a method
+        //检测是否在子类中已经添加过该方法，如果在子类中已经添加过，则表示子类覆盖了该方法
+        //无需再向uniqueMethods集合中添加该方法
         if (!uniqueMethods.containsKey(signature)) {
           uniqueMethods.put(signature, currentMethod);
         }

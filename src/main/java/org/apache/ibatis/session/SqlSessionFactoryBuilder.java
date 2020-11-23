@@ -44,6 +44,7 @@ public class SqlSessionFactoryBuilder {
     return build(reader, null, properties);
   }
 
+  //Mybatis初始化的入口方法
   public SqlSessionFactory build(Reader reader, String environment, Properties properties) {
     try {
       XMLConfigBuilder parser = new XMLConfigBuilder(reader, environment, properties);

@@ -29,9 +29,11 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
 /**
  * @author Clinton Begin
  */
+//对类级别的元信息的封装和处理
 public class MetaClass {
-
+  //用于缓存Reflector对象
   private final ReflectorFactory reflectorFactory;
+  //在创建MetaClass时会指定一个类，该Reflector对象会用于记录该类相关的元信息
   private final Reflector reflector;
 
   private MetaClass(Class<?> type, ReflectorFactory reflectorFactory) {

@@ -38,10 +38,12 @@ import org.apache.ibatis.logging.LogFactory;
 public class TransactionalCache implements Cache {
 
   private static final Log log = LogFactory.getLog(TransactionalCache.class);
-
+  //底层封装的二级缓存所对应的Cache对象
   private final Cache delegate;
   private boolean clearOnCommit;
+  //暂时记录添加到TransactionalCache中的数据，在事务提交时，会将其中的数据添加到二级缓存中
   private final Map<Object, Object> entriesToAddOnCommit;
+  //记录缓存中未命中的Cachekey对象
   private final Set<Object> entriesMissedInCache;
 
   public TransactionalCache(Cache delegate) {

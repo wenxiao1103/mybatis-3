@@ -37,7 +37,7 @@ import org.apache.ibatis.transaction.Transaction;
  * @author Eduardo Macarron
  */
 public class CachingExecutor implements Executor {
-
+  //用于执行数据库操作的Executor对象
   private final Executor delegate;
   private final TransactionalCacheManager tcm = new TransactionalCacheManager();
 

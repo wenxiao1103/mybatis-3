@@ -38,6 +38,7 @@ public interface SqlSession extends Closeable {
    *          the statement
    * @return Mapped object
    */
+  //参数表示使用的查询SQL语句，返回值为查询的结果对象
   <T> T selectOne(String statement);
 
   /**

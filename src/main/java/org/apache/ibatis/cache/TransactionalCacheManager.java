@@ -23,8 +23,9 @@ import org.apache.ibatis.cache.decorators.TransactionalCache;
 /**
  * @author Clinton Begin
  */
+//用于管理CachingExecutor使用的二级缓存对象
 public class TransactionalCacheManager {
-
+  //key是对应的CachingExecutor使用的二级缓存对象
   private final Map<Cache, TransactionalCache> transactionalCaches = new HashMap<>();
 
   public void clear(Cache cache) {

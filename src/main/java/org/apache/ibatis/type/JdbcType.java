@@ -22,6 +22,8 @@ import java.util.Map;
 /**
  * @author Clinton Begin
  */
+
+//这个枚举类型代表JDBC中的数据类型
 public enum JdbcType {
   /*
    * This is added to enable basic support for the

@@ -32,6 +32,7 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  * @author Clinton Begin
  */
 public abstract class BaseBuilder {
+  //是mybatis初始化过程的核心对象，mybaits几乎全部的配置信息会保存到Configuration对象，全局唯一的
   protected final Configuration configuration;
   protected final TypeAliasRegistry typeAliasRegistry;
   protected final TypeHandlerRegistry typeHandlerRegistry;

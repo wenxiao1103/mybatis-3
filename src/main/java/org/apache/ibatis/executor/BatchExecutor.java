@@ -38,6 +38,7 @@ import org.apache.ibatis.transaction.Transaction;
 /**
  * @author Jeff Butler
  */
+//实现批处理多条SQL语句的功能
 public class BatchExecutor extends BaseExecutor {
 
   public static final int BATCH_UPDATE_RETURN_VALUE = Integer.MIN_VALUE + 1002;

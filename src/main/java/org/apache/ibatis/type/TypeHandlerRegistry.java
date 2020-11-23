@@ -53,7 +53,8 @@ import org.apache.ibatis.session.Configuration;
  * @author Kazuki Shimizu
  */
 public final class TypeHandlerRegistry {
-
+  //记录jdbcType与TypcHandler之间的对应关系，其中jdbcType是一个枚举类型，它定义对应的JDBC类型
+  //该集合主要用于从结果集读取数据时，将数据从jdbcType类型转换成Java类型
   private final Map<JdbcType, TypeHandler<?>>  jdbcTypeHandlerMap = new EnumMap<>(JdbcType.class);
   private final Map<Type, Map<JdbcType, TypeHandler<?>>> typeHandlerMap = new ConcurrentHashMap<>();
   private final TypeHandler<Object> unknownTypeHandler;

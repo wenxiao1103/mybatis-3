@@ -23,8 +23,9 @@ import java.sql.SQLException;
 /**
  * @author Clinton Begin
  */
+//所有的类型转换器都继承了TypeHandler接口
 public interface TypeHandler<T> {
-
+  //负责将数据由JdbcType类型转换成Java类型
   void setParameter(PreparedStatement ps, int i, T parameter, JdbcType jdbcType) throws SQLException;
 
   /**
@@ -38,6 +39,7 @@ public interface TypeHandler<T> {
    * @throws SQLException
    *           the SQL exception
    */
+  //负责将数据由Java类型转换成JdbcType类型
   T getResult(ResultSet rs, String columnName) throws SQLException;
 
   T getResult(ResultSet rs, int columnIndex) throws SQLException;

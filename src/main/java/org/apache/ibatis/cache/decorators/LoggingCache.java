@@ -26,7 +26,9 @@ public class LoggingCache implements Cache {
 
   private final Log log;
   private final Cache delegate;
+  //请求次数
   protected int requests = 0;
+  //命中次数
   protected int hits = 0;
 
   public LoggingCache(Cache delegate) {

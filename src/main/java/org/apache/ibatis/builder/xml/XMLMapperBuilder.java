@@ -92,8 +92,11 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   public void parse() {
     if (!configuration.isResourceLoaded(resource)) {
+      //处理<mapper>节点
       configurationElement(parser.evalNode("/mapper"));
+      //将resource记录到LoadedResource中，loadedResources保存已经加载过的映射文件
       configuration.addLoadedResource(resource);
+      //注册Mapper接口
       bindMapperForNamespace();
     }
 
@@ -210,6 +213,7 @@ public class XMLMapperBuilder extends BaseBuilder {
       boolean readWrite = !context.getBooleanAttribute("readOnly", false);
       boolean blocking = context.getBooleanAttribute("blocking", false);
       Properties props = context.getChildrenAsProperties();
+      //负责创建Cache对象
       builderAssistant.useNewCache(typeClass, evictionClass, flushInterval, size, readWrite, blocking, props);
     }
   }

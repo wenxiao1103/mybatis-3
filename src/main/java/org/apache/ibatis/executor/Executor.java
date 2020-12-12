@@ -33,27 +33,27 @@ import org.apache.ibatis.transaction.Transaction;
 public interface Executor {
 
   ResultHandler NO_RESULT_HANDLER = null;
-
+  //执行update，insert，delete三种类型的SQL语句
   int update(MappedStatement ms, Object parameter) throws SQLException;
-
+  //执行seletc类型的SQL语句
   <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey cacheKey, BoundSql boundSql) throws SQLException;
 
   <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException;
 
   <E> Cursor<E> queryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds) throws SQLException;
-
+  //针对批处理多条SQL语句
   List<BatchResult> flushStatements() throws SQLException;
-
+  //提交事务
   void commit(boolean required) throws SQLException;
-
+  //回滚事务
   void rollback(boolean required) throws SQLException;
-
+  //创建缓存的key，及CacheKey对象
   CacheKey createCacheKey(MappedStatement ms, Object parameterObject, RowBounds rowBounds, BoundSql boundSql);
 
   boolean isCached(MappedStatement ms, CacheKey key);
-
+  //清空一级缓存
   void clearLocalCache();
-
+  //延迟加载
   void deferLoad(MappedStatement ms, MetaObject resultObject, String property, CacheKey key, Class<?> targetType);
 
   Transaction getTransaction();

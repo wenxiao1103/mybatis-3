@@ -28,6 +28,7 @@ import org.apache.ibatis.cache.Cache;
 public class FifoCache implements Cache {
 
   private final Cache delegate;
+  //用户记录key的先后顺序
   private final Deque<Object> keyList;
   private int size;
 

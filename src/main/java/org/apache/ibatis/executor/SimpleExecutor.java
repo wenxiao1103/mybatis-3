@@ -58,8 +58,12 @@ public class SimpleExecutor extends BaseExecutor {
     Statement stmt = null;
     try {
       Configuration configuration = ms.getConfiguration();
+      //创建StatementHandler，实际返回的是RoutingStatementHandler对象
+      //MappedStament.statementType来选择具体的StatementHandler的实现
       StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
+      //完成Statement的初始化和创建
       stmt = prepareStatement(handler, ms.getStatementLog());
+      //执行SQL语句，并使用ResultSetHandler处理结果集映射
       return handler.query(stmt, resultHandler);
     } finally {
       closeStatement(stmt);
@@ -75,7 +79,7 @@ public class SimpleExecutor extends BaseExecutor {
     stmt.closeOnCompletion();
     return cursor;
   }
-
+  //不做批量处理，该方法直接放回空集合
   @Override
   public List<BatchResult> doFlushStatements(boolean isRollback) {
     return Collections.emptyList();
@@ -85,6 +89,7 @@ public class SimpleExecutor extends BaseExecutor {
     Statement stmt;
     Connection connection = getConnection(statementLog);
     stmt = handler.prepare(connection, transaction.getTimeout());
+    //处理占位符
     handler.parameterize(stmt);
     return stmt;
   }

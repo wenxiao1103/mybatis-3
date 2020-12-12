@@ -29,7 +29,9 @@ import org.apache.ibatis.cache.Cache;
  * @author Clinton Begin
  */
 public class SoftCache implements Cache {
+  //最近使用的缓存项，最近使用的缓存项不会被删除就是通过将其添加到该集合
   private final Deque<Object> hardLinksToAvoidGarbageCollection;
+  //引用队列，用于记录已经被GC回收的缓存项对应的SoftEntry对象
   private final ReferenceQueue<Object> queueOfGarbageCollectedEntries;
   private final Cache delegate;
   private int numberOfHardLinks;

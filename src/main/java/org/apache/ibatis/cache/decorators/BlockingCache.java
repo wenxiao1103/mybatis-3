@@ -39,6 +39,7 @@ public class BlockingCache implements Cache {
 
   private long timeout;
   private final Cache delegate;
+  //每个key有一个对应的CountDownLatch，以前是ReentrantLock
   private final ConcurrentHashMap<Object, CountDownLatch> locks;
 
   public BlockingCache(Cache delegate) {

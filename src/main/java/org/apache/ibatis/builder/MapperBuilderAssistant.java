@@ -138,6 +138,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .properties(props)
         .build();
     configuration.addCache(cache);
+    //记录当前空间使用的cache对象
     currentCache = cache;
     return cache;
   }

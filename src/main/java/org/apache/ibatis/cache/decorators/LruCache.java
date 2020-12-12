@@ -28,6 +28,7 @@ import org.apache.ibatis.cache.Cache;
 public class LruCache implements Cache {
 
   private final Cache delegate;
+  //用于记录key最近的使用情况
   private Map<Object, Object> keyMap;
   private Object eldestKey;
 

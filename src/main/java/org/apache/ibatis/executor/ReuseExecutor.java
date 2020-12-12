@@ -36,6 +36,7 @@ import org.apache.ibatis.transaction.Transaction;
 /**
  * @author Clinton Begin
  */
+//提供重用Statement的功能
 public class ReuseExecutor extends BaseExecutor {
 
   private final Map<String, Statement> statementMap = new HashMap<>();
@@ -70,9 +71,11 @@ public class ReuseExecutor extends BaseExecutor {
 
   @Override
   public List<BatchResult> doFlushStatements(boolean isRollback) {
+    //遍历statementMap缓存，关闭statement
     for (Statement stmt : statementMap.values()) {
       closeStatement(stmt);
     }
+    //清空statementMap
     statementMap.clear();
     return Collections.emptyList();
   }
@@ -82,13 +85,18 @@ public class ReuseExecutor extends BaseExecutor {
     BoundSql boundSql = handler.getBoundSql();
     String sql = boundSql.getSql();
     if (hasStatementFor(sql)) {
+      //获取statementMap缓存的Statement对象，而SimpleExecutor会通过JDBC的Connection创建Statement对象
       stmt = getStatement(sql);
+      //修改超时时间
       applyTransactionTimeout(stmt);
     } else {
+      //获取数据库连接
       Connection connection = getConnection(statementLog);
+      //创建Statement，缓存到StatementMap中
       stmt = handler.prepare(connection, transaction.getTimeout());
       putStatement(sql, stmt);
     }
+    //处理占位符
     handler.parameterize(stmt);
     return stmt;
   }

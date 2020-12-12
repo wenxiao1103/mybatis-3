@@ -47,20 +47,22 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 /**
  * @author Clinton Begin
  */
+//提供缓存管理和事务管理的功能
 public abstract class BaseExecutor implements Executor {
 
   private static final Log log = LogFactory.getLog(BaseExecutor.class);
-
+  //事务对象，实现事务的提交，回滚和关闭操作
   protected Transaction transaction;
+  //封装的Executor对象
   protected Executor wrapper;
-
+  //延迟加载队列
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
   //一级缓存，用于缓存该executor对象查询结果集映射得到的结果对象
   protected PerpetualCache localCache;
   //一级缓存，用于缓存输出类型的参数
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
-
+  //用于记录嵌套查询的层数
   protected int queryStack;
   private boolean closed;
 
@@ -108,13 +110,14 @@ public abstract class BaseExecutor implements Executor {
   public boolean isClosed() {
     return closed;
   }
-
+  //负责执行insert、update、delete三类语句
   @Override
   public int update(MappedStatement ms, Object parameter) throws SQLException {
     ErrorContext.instance().resource(ms.getResource()).activity("executing an update").object(ms.getId());
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    //清理缓存
     clearLocalCache();
     return doUpdate(ms, parameter);
   }
@@ -133,7 +136,9 @@ public abstract class BaseExecutor implements Executor {
 
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+    //BoundSql用于存储sql语句及对应的参数相关的对象。
     BoundSql boundSql = ms.getBoundSql(parameter);
+    //CacheKey对象生成
     CacheKey key = createCacheKey(ms, parameter, rowBounds, boundSql);
     return query(ms, parameter, rowBounds, resultHandler, key, boundSql);
   }
@@ -150,16 +155,22 @@ public abstract class BaseExecutor implements Executor {
     }
     List<E> list;
     try {
+      //增加查询层数
       queryStack++;
+      //查询一级缓存
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
+        //针对存储过程调用的处理，一级缓存命中的时候，获取缓存中输出类型参数
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
+        //查询数据库
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
+      //减少查询层数
       queryStack--;
     }
+    //延迟加载相关的东西
     if (queryStack == 0) {
       for (DeferredLoad deferredLoad : deferredLoads) {
         deferredLoad.load();
@@ -173,13 +184,14 @@ public abstract class BaseExecutor implements Executor {
     }
     return list;
   }
-
+  //查询数据库，但是不会立即将结果集映射成结果对象，而是将结果集映射成Cursor对象，待用户遍历Cursor时才完成映射操作
   @Override
   public <E> Cursor<E> queryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds) throws SQLException {
     BoundSql boundSql = ms.getBoundSql(parameter);
     return doQueryCursor(ms, parameter, rowBounds, boundSql);
   }
-
+  //负责创建DeferredLoad对象并加入到deferredLoads集合
+  //DeferredLoad负责从localCache缓存中延迟加载结果对象
   @Override
   public void deferLoad(MappedStatement ms, MetaObject resultObject, String property, CacheKey key, Class<?> targetType) {
     if (closed) {
@@ -187,8 +199,10 @@ public abstract class BaseExecutor implements Executor {
     }
     DeferredLoad deferredLoad = new DeferredLoad(resultObject, property, key, localCache, configuration, targetType);
     if (deferredLoad.canLoad()) {
+      //一级缓存中已记录，直接加载
       deferredLoad.load();
     } else {
+      //待外层查询结束后，再加载结果对象
       deferredLoads.add(new DeferredLoad(resultObject, property, key, localCache, configuration, targetType));
     }
   }
@@ -199,13 +213,14 @@ public abstract class BaseExecutor implements Executor {
       throw new ExecutorException("Executor was closed.");
     }
     CacheKey cacheKey = new CacheKey();
-    cacheKey.update(ms.getId());
-    cacheKey.update(rowBounds.getOffset());
-    cacheKey.update(rowBounds.getLimit());
-    cacheKey.update(boundSql.getSql());
+    cacheKey.update(ms.getId());//MappedStatement的id
+    cacheKey.update(rowBounds.getOffset());//offset
+    cacheKey.update(rowBounds.getLimit());//limit
+    cacheKey.update(boundSql.getSql());//sql语句
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     TypeHandlerRegistry typeHandlerRegistry = ms.getConfiguration().getTypeHandlerRegistry();
     // mimic DefaultParameterHandler logic
+    //将实参添加到CacheKey对象中
     for (ParameterMapping parameterMapping : parameterMappings) {
       if (parameterMapping.getMode() != ParameterMode.OUT) {
         Object value;
@@ -220,16 +235,18 @@ public abstract class BaseExecutor implements Executor {
           MetaObject metaObject = configuration.newMetaObject(parameterObject);
           value = metaObject.getValue(propertyName);
         }
+        //将实参添加到CacheKey对象中
         cacheKey.update(value);
       }
     }
+    //如果Environment的id不为空，添加到CacheKey对象中
     if (configuration.getEnvironment() != null) {
       // issue #176
       cacheKey.update(configuration.getEnvironment().getId());
     }
     return cacheKey;
   }
-
+  //检查缓存中是否缓存了CacheKey对应的结果
   @Override
   public boolean isCached(MappedStatement ms, CacheKey key) {
     return localCache.getObject(key) != null;
@@ -242,6 +259,7 @@ public abstract class BaseExecutor implements Executor {
     }
     clearLocalCache();
     flushStatements();
+    //判断是否提交事务
     if (required) {
       transaction.commit();
     }
@@ -322,14 +340,19 @@ public abstract class BaseExecutor implements Executor {
 
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
+    //在缓存中添加占位符
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
     try {
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
     } finally {
+      //删除占位符
       localCache.removeObject(key);
     }
+    //将结果缓存
     localCache.putObject(key, list);
+    //判断是否存储过程
     if (ms.getStatementType() == StatementType.CALLABLE) {
+      //缓存输出类型的参数
       localOutputParameterCache.putObject(key, parameter);
     }
     return list;
@@ -351,13 +374,13 @@ public abstract class BaseExecutor implements Executor {
 
   private static class DeferredLoad {
 
-    private final MetaObject resultObject;
-    private final String property;
-    private final Class<?> targetType;
-    private final CacheKey key;
-    private final PerpetualCache localCache;
+    private final MetaObject resultObject;//外层对应的MetaObject对象
+    private final String property;//延迟加载的属性名称
+    private final Class<?> targetType;//延迟加载的属性类型
+    private final CacheKey key;//延迟加载的结果对象在一级缓存中对应的CacheKey对象
+    private final PerpetualCache localCache;//一级缓存
     private final ObjectFactory objectFactory;
-    private final ResultExtractor resultExtractor;
+    private final ResultExtractor resultExtractor;//负责结果对象的类型转换
 
     // issue #781
     public DeferredLoad(MetaObject resultObject,
@@ -374,16 +397,19 @@ public abstract class BaseExecutor implements Executor {
       this.resultExtractor = new ResultExtractor(configuration, objectFactory);
       this.targetType = targetType;
     }
-
+    //负责检查缓存项是否已经记录到缓存中
     public boolean canLoad() {
       return localCache.getObject(key) != null && localCache.getObject(key) != EXECUTION_PLACEHOLDER;
     }
-
+    //负责从缓存中加载结果对象
     public void load() {
       @SuppressWarnings("unchecked")
       // we suppose we get back a List
+        //从缓存中查询
       List<Object> list = (List<Object>) localCache.getObject(key);
+      //类型转换
       Object value = resultExtractor.extractObjectFromList(list, targetType);
+      //设置外层对象的对应属性
       resultObject.setValue(property, value);
     }
 
